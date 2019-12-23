@@ -5,6 +5,4 @@
 
 (defn -main [& args]
   (println "Server starting...")
-  (web/start-websocket)
-  (web/start-router)
   (server/run-server #'web/app {:port 8080}))
