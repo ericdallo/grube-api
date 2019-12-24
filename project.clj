@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure    "1.10.1"]
                  [org.clojure/core.async "0.5.527"]
+                 [org.clojure/data.json  "0.2.7"]
                  [http-kit               "2.3.0"]
                  [ring                   "1.8.0"]
                  [ring-cors              "0.1.13"]

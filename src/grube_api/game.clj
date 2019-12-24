@@ -23,3 +23,10 @@
 
 (defn remove-player [player-id]
   (swap! game remove-player* player-id))
+
+(defn game-for-player [player-id]
+  (let [players (:players @game)
+        enemies (into {} (filter (fn [[id _]] (not= id player-id))
+                                 players))]
+    {:player (get players player-id)
+     :enemies enemies}))
