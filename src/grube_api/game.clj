@@ -2,8 +2,11 @@
   (:import [java.util UUID])
   (:require [grube-api.player :as player]))
 
-(defonce game (atom {:players-count 0
-                     :players {}}))
+(defonce world (atom {:players-count 0
+                      :players {}}))
+
+(defn tick []
+  #_(prn "tick"))
 
 (defn ^:private add-player*
   [{:keys [players-count players]}
@@ -19,13 +22,13 @@
 
 (defn add-new-player [player-id]
   (let [new-player (player/new-player player-id)]
-    (swap! game add-player* new-player)))
+    (swap! world add-player* new-player)))
 
 (defn remove-player [player-id]
-  (swap! game remove-player* player-id))
+  (swap! world remove-player* player-id))
 
 (defn game-for-player [player-id]
-  (let [players (:players @game)
+  (let [players (:players @world)
         enemies (into {} (filter (fn [[id _]] (not= id player-id))
                                  players))]
     {:player (get players player-id)
