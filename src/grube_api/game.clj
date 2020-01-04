@@ -2,23 +2,27 @@
   (:import [java.util UUID])
   (:require [grube-api.player :as player]))
 
-(defonce world (atom {:players-count 0
+(defonce world (atom {:size {:width 9.0
+                             :height 16.0}
+                      :players-count 0
                       :players {}}))
 
 (defn tick []
   #_(prn "tick"))
 
 (defn ^:private add-player*
-  [{:keys [players-count players]}
+  [{:keys [players-count players] :as world}
    {:keys [id] :as new-player}]
-  {:players-count (inc players-count)
-   :players (assoc players id new-player)})
+  (merge world
+         {:players-count (inc players-count)
+          :players (assoc players id new-player)}))
 
 (defn ^:private remove-player*
-  [{:keys [players-count players]}
+  [{:keys [players-count players] :as world}
    player-id]
-  {:players-count (dec players-count)
-   :players (dissoc players player-id)})
+  (merge world
+         {:players-count (dec players-count)
+          :players (dissoc players player-id)}))
 
 (defn add-new-player [player-id]
   (let [new-player (player/new-player player-id)]
@@ -27,9 +31,14 @@
 (defn remove-player [player-id]
   (swap! world remove-player* player-id))
 
-(defn game-for-player [player-id]
-  (let [players (:players @world)
-        enemies (into {} (filter (fn [[id _]] (not= id player-id))
-                                 players))]
-    {:player (get players player-id)
-     :enemies enemies}))
+(defn move-player*
+  [{:keys [players-count players] :as world}
+   player-id
+   position]
+  (merge world
+         {:players-count players-count
+          :players (assoc-in players [player-id :position] position)}))
+
+(defn move-player
+  [player-id position]
+  (swap! world move-player* player-id position))

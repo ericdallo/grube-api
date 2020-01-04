@@ -18,9 +18,9 @@
   (println "Disconnected:" uid)
   (game/remove-player uid))
 
-(defmethod event :grube/test
-  [_ data]
-  (println (str "Received data: " data)))
+(defmethod event :grube/move-player
+  [{:keys [uid]} data]
+  (game/move-player uid data))
 
 (defn handle-event
   [{:keys [?data] :as msg}]

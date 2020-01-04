@@ -40,12 +40,16 @@
 
 (defn ticker []
   (while true
-    (Thread/sleep 150)
+    (Thread/sleep 10)
     (try
       (dosync (game/tick))
-      (broadcast)
+      #_(broadcast)
       (catch Exception ex
         (println ex)))))
+
+(defn handle-broadicasting [msg]
+  (handler/handle-event msg)
+  (broadcast))
 
 (defn start-websocket! []
   (def channel-socket
@@ -56,7 +60,7 @@
 
 (defn start-router! []
   (def router
-    (sente/start-chsk-router! (:ch-recv channel-socket) handler/handle-event)))
+    (sente/start-chsk-router! (:ch-recv channel-socket) handle-broadicasting)))
 
 (defn start-ticker! []
   (def ticker-thread
