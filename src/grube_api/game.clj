@@ -42,13 +42,17 @@
     (assoc world :bullets bullets)))
 
 (defn ^:private move-player-bullets
-  [[player-id bullets]]
-  (let [moved-bullets (map bullet/move bullets)]
-    {player-id moved-bullets}))
+  [world-size [player-id bullets]]
+  (let [moved-bullets (->> bullets
+                           (map bullet/move)
+                           (remove (partial bullet/invalid-position? world-size)))]
+    (if (empty? moved-bullets)
+      {}
+      {player-id moved-bullets})))
 
 (defn ^:private move-all-bullets*
-  [{:keys [bullets] :as world}]
-  (let [moved-bullets (map move-player-bullets bullets)]
+  [{:keys [bullets size] :as world}]
+  (let [moved-bullets (map (partial move-player-bullets size) bullets)]
     (assoc world :bullets (into {} moved-bullets))))
 
 (defn tick []
