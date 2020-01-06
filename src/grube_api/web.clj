@@ -40,10 +40,10 @@
 
 (defn ticker []
   (while true
-    (Thread/sleep 10)
+    (Thread/sleep 200)
     (try
       (dosync (game/tick))
-      #_(broadcast)
+      (broadcast)
       (catch Exception ex
         (println ex)))))
 

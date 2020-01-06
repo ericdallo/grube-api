@@ -20,7 +20,17 @@
 
 (defmethod event :grube/move-player
   [{:keys [uid]} data]
-  (game/move-player uid data))
+  (let [position {:x (:x data)
+                  :y (:y data)}
+        direction (:direction data)]
+    (game/move-player uid direction position)))
+
+(defmethod event :grube/player-shoot
+  [{:keys [uid]} data]
+  (let [position {:x (:x data)
+                  :y (:y data)}
+        direction (:direction data)]
+    (game/player-shoot uid direction position)))
 
 (defn handle-event
   [{:keys [?data] :as msg}]

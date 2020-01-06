@@ -1,28 +1,58 @@
 (ns grube-api.game
   (:import [java.util UUID])
-  (:require [grube-api.player :as player]))
+  (:require [grube-api.player :as player]
+            [grube-api.bullet :as bullet]
+            [clojure.pprint :as p]))
 
 (defonce world (atom {:size {:width 9.0
                              :height 16.0}
-                      :players-count 0
-                      :players {}}))
-
-(defn tick []
-  #_(prn "tick"))
+                      :players {}
+                      :bullets {}}))
 
 (defn ^:private add-player*
-  [{:keys [players-count players] :as world}
+  [{:keys [players] :as world}
    {:keys [id] :as new-player}]
-  (merge world
-         {:players-count (inc players-count)
-          :players (assoc players id new-player)}))
+  (assoc world :players (assoc players id new-player)))
 
 (defn ^:private remove-player*
-  [{:keys [players-count players] :as world}
+  [{:keys [players] :as world}
    player-id]
-  (merge world
-         {:players-count (dec players-count)
-          :players (dissoc players player-id)}))
+  (assoc world :players (dissoc players player-id)))
+
+(defn ^:private move-player*
+  [{:keys [players] :as world}
+   player-id
+   direction
+   position]
+  (let [players (-> players
+                    (assoc-in [player-id :position] position)
+                    (assoc-in [player-id :direction] direction))]
+    (assoc world :players players)))
+
+(defn ^:private player-shoot*
+  [{:keys [bullets] :as world}
+   player-id
+   direction
+   position]
+  (let [new-bullet         (bullet/new-bullet direction position)
+        current-bullets    (or (get bullets player-id) [])
+        new-player-bullets (conj current-bullets new-bullet)
+        bullets            (-> bullets
+                               (assoc player-id new-player-bullets))]
+    (assoc world :bullets bullets)))
+
+(defn ^:private move-player-bullets
+  [[player-id bullets]]
+  (let [moved-bullets (map bullet/move bullets)]
+    {player-id moved-bullets}))
+
+(defn ^:private move-all-bullets*
+  [{:keys [bullets] :as world}]
+  (let [moved-bullets (map move-player-bullets bullets)]
+    (assoc world :bullets (into {} moved-bullets))))
+
+(defn tick []
+  (swap! world move-all-bullets*))
 
 (defn add-new-player [player-id]
   (let [new-player (player/new-player player-id)]
@@ -31,14 +61,10 @@
 (defn remove-player [player-id]
   (swap! world remove-player* player-id))
 
-(defn move-player*
-  [{:keys [players-count players] :as world}
-   player-id
-   position]
-  (merge world
-         {:players-count players-count
-          :players (assoc-in players [player-id :position] position)}))
-
 (defn move-player
-  [player-id position]
-  (swap! world move-player* player-id position))
+  [player-id direction position]
+  (swap! world move-player* player-id direction position))
+
+(defn player-shoot
+  [player-id direction position]
+  (swap! world player-shoot* player-id direction position))

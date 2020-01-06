@@ -2,6 +2,7 @@
 
 (defn new-player [id]
   {:id id
+   :direction :right
    :position {:x 0.0
               :y 0.0}
    :step 1.0
