@@ -9,9 +9,10 @@
     "down" (update-in position [:y] inc)))
 
 (defn new-bullet
-  [direction position]
+  [direction position as-of]
   {:direction direction
-   :position position})
+   :position position
+   :created-at as-of})
 
 (defn move
   [{:keys [direction position] :as bullet}]

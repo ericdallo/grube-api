@@ -1,33 +1,18 @@
 (ns grube-api.web
   (:require [clojure.core.async :refer [go thread]]
-            [clojure.data.json :as json]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
             [grube-api.game :as game]
             [grube-api.handler :as handler]
+            [grube-api.json :as json]
             [ring.middleware.cors :as r.cors]
             [ring.middleware.defaults :as r.defaults]
             [ring.middleware.reload :as r.reload]
             [taoensso.sente :as sente]
-            [taoensso.sente.interfaces :as sente.interfaces]
             [taoensso.sente.server-adapters.http-kit :as http-kit])
   (:import java.util.UUID))
 
 (declare channel-socket)
-
-(defn ^:private keywordize
-  [value]
-  (if (string? value)
-    (keyword value)
-    value))
-
-(deftype JsonTransitPacker []
-  sente.interfaces/IPacker
-  (pack   [_ object] (json/write-str object))
-  (unpack [_ string] (->> string
-                          json/read-str
-                          (map keywordize)
-                          vec)))
 
 (defn uid [_]
   (str (UUID/randomUUID)))
@@ -56,7 +41,7 @@
     (sente/make-channel-socket! http-kit/sente-web-server-adapter
                                 {:user-id-fn #'uid
                                  :csrf-token-fn nil
-                                 :packer (->JsonTransitPacker)})))
+                                 :packer (json/->JsonTransitPacker)})))
 
 (defn start-router! []
   (def router

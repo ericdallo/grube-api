@@ -2,7 +2,7 @@
   (:import [java.util UUID])
   (:require [grube-api.player :as player]
             [grube-api.bullet :as bullet]
-            [clojure.pprint :as p]))
+            [clj-time.core :as t]))
 
 (defonce world (atom {:size {:width 9.0
                              :height 16.0}
@@ -33,8 +33,9 @@
   [{:keys [bullets] :as world}
    player-id
    direction
-   position]
-  (let [new-bullet         (bullet/new-bullet direction position)
+   position
+   as-of]
+  (let [new-bullet         (bullet/new-bullet direction position as-of)
         current-bullets    (or (get bullets player-id) [])
         new-player-bullets (conj current-bullets new-bullet)
         bullets            (-> bullets
@@ -71,4 +72,9 @@
 
 (defn player-shoot
   [player-id direction position]
-  (swap! world player-shoot* player-id direction position))
+  (if-let [last-bullet (last (get-in @world [:bullets player-id] []))]
+    (let [now (t/now)
+          last-bullet-plus-1-second (t/plus (:created-at last-bullet) (t/seconds 1))]
+      (when (t/after? now last-bullet-plus-1-second)
+        (swap! world player-shoot* player-id direction position now)))
+    (swap! world player-shoot* player-id direction position (t/now))))
