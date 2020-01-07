@@ -72,7 +72,7 @@
 
 (defn player-shoot
   [player-id direction position]
-  (if-let [last-bullet (last (get-in @world [:bullets player-id] []))]
+  (if-let [last-bullet (player/last-shot-bullet @world player-id)]
     (let [now (t/now)
           last-bullet-plus-1-second (t/plus (:created-at last-bullet) (t/seconds 1))]
       (when (t/after? now last-bullet-plus-1-second)
