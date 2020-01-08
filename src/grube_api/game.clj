@@ -6,8 +6,7 @@
 
 (defonce world (atom {:size {:width 9.0
                              :height 16.0}
-                      :players {}
-                      :bullets {}}))
+                      :players {}}))
 
 (defn ^:private add-player*
   [{:keys [players] :as world}
@@ -30,31 +29,27 @@
     (assoc world :players players)))
 
 (defn ^:private player-shoot*
-  [{:keys [bullets] :as world}
+  [{:keys [players] :as world}
    player-id
    direction
    position
    as-of]
   (let [new-bullet         (bullet/new-bullet direction position as-of)
-        current-bullets    (or (get bullets player-id) [])
-        new-player-bullets (conj current-bullets new-bullet)
-        bullets            (-> bullets
-                               (assoc player-id new-player-bullets))]
-    (assoc world :bullets bullets)))
+        current-bullets    (get-in players [player-id :bullets])
+        new-player-bullets (conj current-bullets new-bullet)]
+    (assoc-in world [:players player-id :bullets] new-player-bullets)))
 
 (defn ^:private move-player-bullets
-  [world-size [player-id bullets]]
-  (let [moved-bullets (->> bullets
-                           (map bullet/move)
-                           (remove (partial bullet/invalid-position? world-size)))]
-    (if (empty? moved-bullets)
-      {}
-      {player-id moved-bullets})))
+  [world-size [player-id {:keys [bullets] :as player}]]
+  (let [new-bullets (->> bullets
+                         (map bullet/move)
+                         (remove (partial bullet/invalid-position? world-size)))]
+    {player-id (assoc player :bullets new-bullets)}))
 
 (defn ^:private move-all-bullets*
-  [{:keys [bullets size] :as world}]
-  (let [moved-bullets (map (partial move-player-bullets size) bullets)]
-    (assoc world :bullets (into {} moved-bullets))))
+  [{:keys [players size] :as world}]
+  (let [players (map (partial move-player-bullets size) players)]
+    (assoc world :players (into {} players))))
 
 (defn tick []
   (swap! world move-all-bullets*))
