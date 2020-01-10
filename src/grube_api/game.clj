@@ -8,9 +8,10 @@
                       :players []}))
 
 (defn ^:private add-player!*
-  [{:keys [players] :as world}
-   new-player]
-  (assoc world :players (conj players new-player)))
+  [{:keys [size players] :as world}
+   player-id]
+  (let [new-player (player/new-player player-id size)]
+    (assoc world :players (conj players new-player))))
 
 (defn ^:private remove-player!*
   [{:keys [players] :as world}
@@ -61,8 +62,7 @@
     (assoc world :players (vec players))))
 
 (defn add-new-player! [player-id]
-  (let [new-player (player/new-player player-id)]
-    (swap! world add-player!* new-player)))
+  (swap! world add-player!* player-id))
 
 (defn remove-player! [player-id]
   (swap! world remove-player!* player-id))

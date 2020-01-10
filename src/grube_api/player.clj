@@ -1,16 +1,21 @@
 (ns grube-api.player
-  (:require [grube-api.bullet :as bullet]))
+  (:require [grube-api.bullet :as bullet])
+  (:import [java.util Random]))
 
-(defn new-player [id]
-  {:id id
-   :life 3
-   :direction :right
-   :position {:x 0.0
-              :y 0.0}
-   :step 1.0
-   :size 1.5
-   :color 0xFF1ABC9C
-   :bullets []})
+(defn new-player [id {:keys [width height]}]
+  (let [seed (hash id)
+        random (Random. seed)
+        random-x (.nextInt random width)
+        random-y (.nextInt random height)]
+    {:id id
+     :life 3
+     :direction :right
+     :position {:x (double random-x)
+                :y (double random-y)}
+     :step 1.0
+     :size 1.5
+     :color 0xFF1ABC9C
+     :bullets []}))
 
 (defn find-by-id
   [players player-id]
