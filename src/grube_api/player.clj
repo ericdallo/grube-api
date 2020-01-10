@@ -12,10 +12,25 @@
    :color 0xFF1ABC9C
    :bullets []})
 
+(defn find-by-id
+  [players player-id]
+  (->> players
+       (filter #(= player-id (:id %)))
+       first))
+
+(defn add-to-players
+  [players player-to-add]
+  (-> (fn [player]
+        (if (= (:id player-to-add) (:id player))
+            player-to-add
+            player))
+      (map players)))
+
 (defn last-shot-bullet
-  [world player-id]
-  (->> [:players player-id :bullets]
-       (get-in world)
+  [players player-id]
+  (->> player-id
+       (find-by-id players)
+       :bullets
        (sort-by :created-at)
        last))
 
@@ -27,7 +42,7 @@
 (defn ^:private player-hitted?
   [players
    {:keys [id position]}]
-  (->> (enemies (vals players) id)
+  (->> (enemies players id)
        (map #(:bullets %))
        flatten
        (map #(:position %))
@@ -35,6 +50,6 @@
 
 (defn hit-player
   [players player]
-  (if (player-hitted? players (val player))
-    {(key player) (update-in (val player) [:life] dec)}
+  (if (player-hitted? players player)
+    (update-in player [:life] dec)
     player))
