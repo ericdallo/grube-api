@@ -27,7 +27,7 @@
   (while true
     (Thread/sleep 200)
     (try
-      (dosync (game/tick))
+      (dosync (game/tick!))
       (broadcast)
       (catch Exception ex
         (println ex)))))

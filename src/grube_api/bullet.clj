@@ -26,3 +26,7 @@
       (> y height)
       (< x 0)
       (< y 0)))
+
+(defn hitted?
+  [position other-position]
+  (= position other-position))
