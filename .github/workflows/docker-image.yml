@@ -1,0 +1,48 @@
+name: Tag new version and build docker image
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  tag:
+    name: Tag new version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Bump version and push tag
+      id: tag
+      uses: anothrNick/github-tag-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BUMP: patch
+        WITH_V: true
+
+  build-docker:
+    name: Build and publish docker image
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Get latest tag
+        id: latest-tag
+        uses: WyriHaximus/github-action-get-previous-tag@0.1.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Remove "v" from tag
+        id: replace-tag
+        uses: frabert/replace-string-action@v1.1
+        with:
+          pattern: 'v(.+)'
+          string: ${{ steps.latest-tag.outputs.tag}}
+          replace-with: '$1'
+      - name: Buid and publish docker image
+        env:
+          IMAGE_TAG: ${{ steps.replace-tag.outputs.replaced }}
+        run: |
+          docker login docker.pkg.github.com --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
+          docker build --tag docker.pkg.github.com/$GITHUB_REPOSITORY/grube-api:$IMAGE_TAG /home/runner/work/grube-api/grube-api
+          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/grube-api:$IMAGE_TAG
+          docker build --tag docker.pkg.github.com/$GITHUB_REPOSITORY/grube-api:latest /home/runner/work/grube-api/grube-api
+          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/grube-api:latest
