@@ -31,6 +31,12 @@
             player))
       (map players)))
 
+(defn bullets-by-player-id
+  [{:keys [id bullets shooting]}]
+  (when (or (not (empty? bullets))
+             shooting)
+    {id bullets}))
+
 (defn last-shot-bullet
   [players player-id]
   (->> player-id
@@ -44,7 +50,7 @@
   (->> players
        (remove (fn [{:keys [id]}] (= id player-id)))))
 
-(defn ^:private player-hitted?
+(defn player-hitted?
   [players
    {:keys [id position]}]
   (->> (enemies players id)

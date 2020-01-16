@@ -3,7 +3,8 @@
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
             [grube-api.game :as game]
-            [grube-api.handler :as handler]
+            [grube-api.in-handler :as in-handler]
+            [grube-api.out-handler :as out-handler]
             [grube-api.json :as json]
             [ring.middleware.cors :as r.cors]
             [ring.middleware.defaults :as r.defaults]
@@ -13,39 +14,34 @@
   (:import java.util.UUID))
 
 (declare channel-socket)
+(declare out-fn)
 
 (defn uid [_]
   (str (UUID/randomUUID)))
-
-(defn broadcast []
-  (let [all-users @(:connected-uids channel-socket)
-        send-fn!  (:send-fn channel-socket)]
-    (doseq [user-id (:any all-users)]
-      (send-fn! user-id [:game/world @game/world]))))
 
 (defn ticker []
   (while true
     (Thread/sleep 200)
     (try
-      (dosync (game/tick!))
-      (broadcast)
+      (when out-fn
+        (dosync (game/tick! out-fn)))
       (catch Exception ex
         (println ex)))))
 
-(defn handle-broadicasting [msg]
-  (handler/handle-event msg)
-  (broadcast))
+(defn handle-events [msg]
+  (in-handler/handle-event msg out-fn))
 
 (defn start-websocket! []
   (def channel-socket
     (sente/make-channel-socket! http-kit/sente-web-server-adapter
                                 {:user-id-fn #'uid
                                  :csrf-token-fn nil
-                                 :packer (json/->JsonTransitPacker)})))
+                                 :packer (json/->JsonTransitPacker)}))
+  (def out-fn (partial out-handler/handle-event channel-socket)))
 
 (defn start-router! []
   (def router
-    (sente/start-chsk-router! (:ch-recv channel-socket) handle-broadicasting)))
+    (sente/start-chsk-router! (:ch-recv channel-socket) handle-events)))
 
 (defn start-ticker! []
   (def ticker-thread
