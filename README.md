@@ -1,14 +1,11 @@
 # grube-api
 
-A Clojure library designed to ... well, that part is up to you.
+A clojure websocket backend for manage [grube](https://github.com/ericdallo/grube) game
 
-## Usage
-
-FIXME
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2020 Grube 
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
