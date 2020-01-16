@@ -9,28 +9,37 @@
 
 (defn ^:private add-player!*
   [{:keys [size players] :as world}
-   player-id]
-  (let [new-player (player/new-player player-id size)]
-    (assoc world :players (conj players new-player))))
+   player-id
+   out-fn]
+  (let [new-player (player/new-player player-id size)
+        world (assoc world :players (conj players new-player))]
+    (out-fn :player-added {:player new-player :world world})
+    world))
 
 (defn ^:private remove-player!*
   [{:keys [players] :as world}
-   player-id]
+   player-id
+   out-fn]
   (let [updated-players (->> players
                              (remove #(= (:id %) player-id))
-                             vec)]
-    (assoc world :players updated-players)))
+                             vec)
+        world (assoc world :players updated-players)]
+    (out-fn :player-removed {:player-id player-id})
+    world))
 
 (defn ^:private move-player!*
   [{:keys [players] :as world}
    player-id
    direction
-   position]
+   position
+   out-fn]
   (let [player (-> players
                    (player/find-by-id player-id)
                    (assoc :position position)
-                   (assoc :direction direction))]
-    (assoc world :players (player/add-to-players players player))))
+                   (assoc :direction direction))
+        world (assoc world :players (player/add-to-players players player))]
+    (out-fn :player-moved {:player player})
+    world))
 
 (defn ^:private player-shoot!*
   [{:keys [players] :as world}
@@ -49,27 +58,46 @@
   (let [new-bullets (->> bullets
                          (map bullet/move)
                          (remove (partial bullet/invalid-position? world-size)))]
-    (assoc player :bullets new-bullets)))
+    (-> player
+        (assoc :bullets new-bullets)
+        (assoc :shooting (and (empty? new-bullets)
+                              (not (empty? bullets)))))))
 
 (defn ^:private move-all-bullets!
-  [{:keys [players size] :as world}]
-  (let [players (map (partial move-player-bullets!* size) players)]
-    (assoc world :players (vec players))))
+  [{:keys [players size] :as world}
+   out-fn]
+  (let [players           (map (partial move-player-bullets!* size) players)
+        world             (assoc world :players (vec players))
+        bullets-by-player (into {} (map player/bullets-by-player-id players))
+        ]
+    (when (not (empty? bullets-by-player))
+      (out-fn :bullets-moved {:bullets-by-player bullets-by-player}))
+    world))
 
 (defn ^:private check-hitted-players!
-  [{:keys [players] :as world}]
-  (let [players (map (partial player/hit-player players) players)]
-    (assoc world :players (vec players))))
+  [{:keys [players] :as world}
+   out-fn]
+  (let [players (map (partial player/hit-player players) players)
+        hitted-player-ids (->> players
+                               (filter (partial player/player-hitted? players))
+                               (map (juxt :id))
+                               (into [])
+                               flatten)
+        world (assoc world :players (vec players))]
+    (when (not (empty? hitted-player-ids))
+      (println hitted-player-ids)
+      (out-fn :players-hitted {:player-ids hitted-player-ids}))
+    world))
 
-(defn add-new-player! [player-id]
-  (swap! world add-player!* player-id))
+(defn add-new-player! [player-id out-fn]
+  (swap! world add-player!* player-id out-fn))
 
-(defn remove-player! [player-id]
-  (swap! world remove-player!* player-id))
+(defn remove-player! [player-id out-fn]
+  (swap! world remove-player!* player-id out-fn))
 
 (defn move-player!
-  [player-id direction position]
-  (swap! world move-player!* player-id direction position))
+  [player-id direction position out-fn]
+  (swap! world move-player!* player-id direction position out-fn))
 
 (defn player-shoot!
   [player-id direction position]
@@ -80,6 +108,6 @@
         (swap! world player-shoot!* player-id direction position now)))
     (swap! world player-shoot!* player-id direction position (t/now))))
 
-(defn tick! []
-  (swap! world move-all-bullets!)
-  (swap! world check-hitted-players!))
+(defn tick! [out-fn]
+  (swap! world move-all-bullets! out-fn)
+  (swap! world check-hitted-players! out-fn))
