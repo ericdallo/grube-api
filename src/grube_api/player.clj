@@ -1,5 +1,6 @@
 (ns grube-api.player
-  (:require [grube-api.bullet :as bullet])
+  (:require [grube-api.bullet :as bullet]
+            [clj-time.core :as t])
   (:import [java.util Random]))
 
 (defn new-player [id {:keys [width height]}]
@@ -10,6 +11,7 @@
     {:id id
      :life 3
      :score 0
+     :stamina 10
      :direction :right
      :position {:x (double random-x)
                 :y (double random-y)}
@@ -37,6 +39,13 @@
   (when (or (not (empty? bullets))
              shooting)
     {id bullets}))
+
+(defn stamina->seconds
+  [player]
+  (-> player
+      :stamina
+      (* 100)
+      t/millis))
 
 (defn last-shot-bullet
   [players player-id]

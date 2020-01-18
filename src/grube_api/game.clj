@@ -110,9 +110,11 @@
 (defn player-shoot!
   [player-id direction position]
   (if-let [last-bullet (player/last-shot-bullet (:players @world) player-id)]
-    (let [now (t/now)
-          last-bullet-plus-1-second (t/plus (:created-at last-bullet) (t/seconds 1))]
-      (when (t/after? now last-bullet-plus-1-second)
+    (let [now                      (t/now)
+          player                   (player/find-by-id (:players @world) player-id)
+          stamina-time             (player/stamina->seconds player)
+          last-bullet-plus-stamina (t/plus (:created-at last-bullet) stamina-time)]
+      (when (t/after? now last-bullet-plus-stamina)
         (swap! world player-shoot!* player-id direction position now)))
     (swap! world player-shoot!* player-id direction position (t/now))))
 
