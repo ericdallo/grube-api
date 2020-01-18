@@ -9,6 +9,7 @@
         random-y (.nextInt random height)]
     {:id id
      :life 3
+     :score 0
      :direction :right
      :position {:x (double random-x)
                 :y (double random-y)}
@@ -50,17 +51,40 @@
   (->> players
        (remove (fn [{:keys [id]}] (= id player-id)))))
 
-(defn player-hitted?
+(defn hitted?
   [players
-   {:keys [id position]}]
-  (->> (enemies players id)
-       (map #(:bullets %))
-       flatten
-       (map #(:position %))
-       (some (partial bullet/hitted? position))))
+   {:keys [id position life]}]
+  (when (>= life 0)
+    (->> (enemies players id)
+         (map #(:bullets %))
+         flatten
+         (map #(:position %))
+         (some (partial bullet/hitted? position)))))
+
+(defn killed-other-player?
+  [players
+   {:keys [id bullets]}]
+  (let [dead-enemies-positions (->> (enemies players id)
+                                    (filter #(= (:life %) 0))
+                                    (map (juxt :position))
+                                    flatten)
+        bullets-positions (->> bullets
+                               (map (juxt :position))
+                               flatten)]
+    (some #(some (partial bullet/hitted? %) dead-enemies-positions) bullets-positions)))
+
+(defn score [player]
+  (update-in player [:score] inc))
+
+(defn score-if-contains
+  [scored-players
+   {:keys [id] :as player}]
+  (if (some #(= (:id %) id) scored-players)
+    (score player)
+    player))
 
 (defn hit-player
   [players player]
-  (if (player-hitted? players player)
+  (if (hitted? players player)
     (update-in player [:life] dec)
     player))

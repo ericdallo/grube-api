@@ -68,8 +68,7 @@
    out-fn]
   (let [players           (map (partial move-player-bullets!* size) players)
         world             (assoc world :players (vec players))
-        bullets-by-player (into {} (map player/bullets-by-player-id players))
-        ]
+        bullets-by-player (into {} (map player/bullets-by-player-id players))]
     (when (not (empty? bullets-by-player))
       (out-fn :bullets-moved {:bullets-by-player bullets-by-player}))
     world))
@@ -77,16 +76,26 @@
 (defn ^:private check-hitted-players!
   [{:keys [players] :as world}
    out-fn]
-  (let [players (map (partial player/hit-player players) players)
+  (let [players           (map (partial player/hit-player players) players)
         hitted-player-ids (->> players
-                               (filter (partial player/player-hitted? players))
+                               (filter (partial player/hitted? players))
                                (map (juxt :id))
                                (into [])
                                flatten)
-        world (assoc world :players (vec players))]
+        world             (assoc world :players (vec players))]
     (when (not (empty? hitted-player-ids))
       (out-fn :players-hitted {:player-ids hitted-player-ids}))
     world))
+
+(defn ^:private score-players!
+  [{:keys [players] :as world}
+   out-fn]
+  (let [players-to-score (filter (partial player/killed-other-player? players) players)
+        players*         (map (partial player/score-if-contains players-to-score) players)
+        world*           (assoc world :players players*)
+        scored-players   (map player/score players-to-score)]
+    (out-fn :players-scored {:players scored-players})
+    world*))
 
 (defn add-new-player! [player-id out-fn]
   (swap! world add-player!* player-id out-fn))
@@ -109,4 +118,5 @@
 
 (defn tick! [out-fn]
   (swap! world move-all-bullets! out-fn)
-  (swap! world check-hitted-players! out-fn))
+  (swap! world check-hitted-players! out-fn)
+  (swap! world score-players! out-fn))
