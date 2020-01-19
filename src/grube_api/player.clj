@@ -26,11 +26,11 @@
        (filter #(= player-id (:id %)))
        first))
 
-(defn add-to-players
-  [players player-to-add]
+(defn merge-in-players
+  [players updated-player]
   (-> (fn [player]
-        (if (= (:id player-to-add) (:id player))
-            player-to-add
+        (if (= (:id updated-player) (:id player))
+            updated-player
             player))
       (map players)))
 
@@ -97,3 +97,8 @@
   (if (hitted? players player)
     (update-in player [:life] dec)
     player))
+
+(defn respawn [player new-position]
+  (-> player
+      (assoc :life 3)
+      (assoc :position new-position)))
