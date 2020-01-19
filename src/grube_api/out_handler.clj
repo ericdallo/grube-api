@@ -34,6 +34,12 @@
   (if-let [{:keys [score]} (player/find-by-id players player-id)]
     [:game/player-scored {:score score}]))
 
+(defmethod out :player-respawned
+  [{:keys [player]}
+   player-id]
+  (when (= player-id (:id player))
+    [:game/player-respawned {:player player}]))
+
 (defn ^:private send-to-all
   [socket payload]
   (let [all-users @(:connected-uids socket)

@@ -1,7 +1,8 @@
 (ns grube-api.game
   (:require [clj-time.core :as t]
             [grube-api.bullet :as bullet]
-            [grube-api.player :as player]))
+            [grube-api.player :as player])
+  (:import [java.util Random]))
 
 (defonce world (atom {:size {:width 9.0
                              :height 16.0}
@@ -37,7 +38,7 @@
                    (player/find-by-id player-id)
                    (assoc :position position)
                    (assoc :direction direction))
-        world (assoc world :players (player/add-to-players players player))]
+        world (assoc world :players (player/merge-in-players players player))]
     (out-fn :player-moved {:player player})
     world))
 
@@ -51,7 +52,20 @@
         new-bullet         (bullet/new-bullet direction position as-of)
         bullets            (conj (:bullets player) new-bullet)
         new-player-bullets (assoc player :bullets bullets)]
-    (assoc world :players (player/add-to-players players new-player-bullets))))
+    (assoc world :players (player/merge-in-players players new-player-bullets))))
+
+(defn ^:private player-respawn!*
+  [{:keys [players size] :as world}
+   player-id
+   out-fn]
+  (let [player           (player/find-by-id players player-id)
+        random (Random.)
+        new-position     {:x (double (.nextInt random (:width size)))
+                          :y (double (.nextInt random (:height size)))}
+        respawned-player (player/respawn player new-position)
+        world (assoc world :players (player/merge-in-players players respawned-player))]
+    (out-fn :player-respawned {:player respawned-player})
+    world))
 
 (defn ^:private move-player-bullets!*
   [world-size {:keys [bullets] :as player}]
@@ -117,6 +131,10 @@
       (when (t/after? now last-bullet-plus-stamina)
         (swap! world player-shoot!* player-id direction position now)))
     (swap! world player-shoot!* player-id direction position (t/now))))
+
+(defn player-respawn!
+  [player-id out-fn]
+  (swap! world player-respawn!* player-id out-fn))
 
 (defn tick! [out-fn]
   (swap! world move-all-bullets! out-fn)

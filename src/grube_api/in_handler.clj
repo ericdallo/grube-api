@@ -30,6 +30,10 @@
         direction (:direction data)]
     (game/player-shoot! uid direction position)))
 
+(defmethod in :grube/player-respawn
+  [{:keys [uid]} _ out-fn]
+  (game/player-respawn! uid out-fn))
+
 (defn handle-event
   [{:keys [?data] :as msg} out-fn]
   (in msg (walk/keywordize-keys ?data) out-fn))
