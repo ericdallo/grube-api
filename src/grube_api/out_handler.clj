@@ -20,6 +20,14 @@
   [{:keys [player]} _]
   [:game/player-moved {:player player}])
 
+(defmethod out :player-shot
+  [{:keys [player-id bullets]} user-id]
+  (if (= player-id user-id)
+    [:game/player-shot {:player-id player-id
+                        :bullets bullets}]
+    [:game/enemy-shot {:enemy-id player-id
+                       :bullets bullets}]))
+
 (defmethod out :bullets-moved
   [{:keys [bullets-by-player]} _]
   [:game/bullets-moved {:bullets-by-player bullets-by-player}])

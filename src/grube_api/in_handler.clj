@@ -25,10 +25,10 @@
     (game/move-player! uid direction position out-fn)))
 
 (defmethod in :grube/player-shoot
-  [{:keys [uid]} data _]
+  [{:keys [uid]} data out-fn]
   (let [position (select-keys data [:x :y])
         direction (:direction data)]
-    (game/player-shoot! uid direction position)))
+    (game/player-shoot! uid direction position out-fn)))
 
 (defmethod in :grube/player-respawn
   [{:keys [uid]} _ out-fn]

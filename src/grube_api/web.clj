@@ -16,7 +16,7 @@
 (declare channel-socket)
 (declare out-fn)
 
-(defn uid [_]
+(defn random-uuid [_]
   (str (UUID/randomUUID)))
 
 (defn ticker []
@@ -34,7 +34,7 @@
 (defn start-websocket! []
   (def channel-socket
     (sente/make-channel-socket! http-kit/sente-web-server-adapter
-                                {:user-id-fn #'uid
+                                {:user-id-fn #'random-uuid
                                  :csrf-token-fn nil
                                  :packer (json/->JsonTransitPacker)}))
   (def out-fn (partial out-handler/handle-event channel-socket)))

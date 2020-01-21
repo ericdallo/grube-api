@@ -47,12 +47,16 @@
    player-id
    direction
    position
-   as-of]
+   as-of
+   out-fn]
   (let [player             (player/find-by-id players player-id)
         new-bullet         (bullet/new-bullet direction position as-of)
         bullets            (conj (:bullets player) new-bullet)
-        new-player-bullets (assoc player :bullets bullets)]
-    (assoc world :players (player/merge-in-players players new-player-bullets))))
+        new-player-bullets (assoc player :bullets bullets)
+        world              (assoc world :players (player/merge-in-players players new-player-bullets))]
+    (out-fn :player-shot {:player-id player-id
+                          :bullets bullets})
+    world))
 
 (defn ^:private player-respawn!*
   [{:keys [players size] :as world}
@@ -119,18 +123,20 @@
 
 (defn move-player!
   [player-id direction position out-fn]
-  (swap! world move-player!* player-id direction position out-fn))
+  (swap! world move-player!* player-id direction position out-fn)
+  (swap! world check-hitted-players! out-fn))
 
 (defn player-shoot!
-  [player-id direction position]
+  [player-id direction position out-fn]
   (if-let [last-bullet (player/last-shot-bullet (:players @world) player-id)]
     (let [now                      (t/now)
           player                   (player/find-by-id (:players @world) player-id)
           stamina-time             (player/stamina->seconds player)
           last-bullet-plus-stamina (t/plus (:created-at last-bullet) stamina-time)]
       (when (t/after? now last-bullet-plus-stamina)
-        (swap! world player-shoot!* player-id direction position now)))
-    (swap! world player-shoot!* player-id direction position (t/now))))
+        (swap! world player-shoot!* player-id direction position now out-fn)))
+    (swap! world player-shoot!* player-id direction position (t/now) out-fn))
+  (swap! world check-hitted-players! out-fn))
 
 (defn player-respawn!
   [player-id out-fn]
