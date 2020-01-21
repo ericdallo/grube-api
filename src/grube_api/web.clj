@@ -40,12 +40,10 @@
   (def out-fn (partial out-handler/handle-event channel-socket)))
 
 (defn start-router! []
-  (def router
-    (sente/start-chsk-router! (:ch-recv channel-socket) handle-events)))
+  (sente/start-chsk-router! (:ch-recv channel-socket) handle-events))
 
 (defn start-ticker! []
-  (def ticker-thread
-    (go (thread (ticker)))))
+  (go (thread (ticker))))
 
 (defroutes routes
   (GET "/health" _ "OK")
