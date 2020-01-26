@@ -112,7 +112,8 @@
         players*         (map (partial player/score-if-contains players-to-score) players)
         world*           (assoc world :players players*)
         scored-players   (map player/score players-to-score)]
-    (out-fn :players-scored {:players scored-players})
+    (when (not (empty? scored-players))
+      (out-fn :players-scored {:players scored-players}))
     world*))
 
 (defn add-new-player! [player-id out-fn]

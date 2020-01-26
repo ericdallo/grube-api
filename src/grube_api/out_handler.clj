@@ -39,8 +39,10 @@
 (defmethod out :players-scored
   [{:keys [players]}
    player-id]
-  (if-let [{:keys [score]} (player/find-by-id players player-id)]
-    [:game/player-scored {:score score}]))
+  (if-let [player (player/find-by-id players player-id)]
+    [:game/player-scored {:score (:score player)}]
+    (let [scored-enemies (map #(select-keys % [:id :score]) players)]
+      [:game/enemies-scored {:enemies scored-enemies}])))
 
 (defmethod out :player-respawned
   [{:keys [player]} _]
