@@ -92,6 +92,16 @@
     (score player)
     player))
 
+(defn find-crowned
+  [players]
+  (when (not (empty? players))
+    (let [max-score-player       (apply max-key :score players)
+          players-with-max-score (->> players
+                                      (filter #(= (:score %) (:score max-score-player)))
+                                      count)]
+      (when (= players-with-max-score 1)
+        max-score-player))))
+
 (defn hit-player
   [players player]
   (if (hitted? players player)

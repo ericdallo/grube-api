@@ -111,9 +111,11 @@
   (let [players-to-score (filter (partial player/killed-other-player? players) players)
         players*         (map (partial player/score-if-contains players-to-score) players)
         world*           (assoc world :players players*)
-        scored-players   (map player/score players-to-score)]
+        scored-players   (map player/score players-to-score)
+        crowned-player   (player/find-crowned players*)]
     (when (not (empty? scored-players))
-      (out-fn :players-scored {:players scored-players}))
+      (out-fn :players-scored {:players scored-players
+                               :crowned-player crowned-player}))
     world*))
 
 (defn add-new-player! [player-id out-fn]

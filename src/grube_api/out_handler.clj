@@ -37,12 +37,15 @@
   [:game/players-hitted {:player-ids player-ids}])
 
 (defmethod out :players-scored
-  [{:keys [players]}
+  [{:keys [players crowned-player]}
    player-id]
+  (println crowned-player)
   (if-let [player (player/find-by-id players player-id)]
-    [:game/player-scored {:score (:score player)}]
+    [:game/player-scored {:score (:score player)
+                          :crowned-player (:id crowned-player)}]
     (let [scored-enemies (map #(select-keys % [:id :score]) players)]
-      [:game/enemies-scored {:enemies scored-enemies}])))
+      [:game/enemies-scored {:enemies scored-enemies
+                             :crowned-player (:id crowned-player)}])))
 
 (defmethod out :player-respawned
   [{:keys [player]} _]
