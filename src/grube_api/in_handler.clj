@@ -18,6 +18,14 @@
   (println "Disconnected:" uid)
   (game/remove-player! uid out-fn))
 
+(defmethod in :grube/player-paused
+  [{:keys [uid]} _ out-fn]
+  (out-fn :player-paused {:player-id uid}))
+
+(defmethod in :grube/player-resumed
+  [{:keys [uid]} _ out-fn]
+  (out-fn :player-resumed {:player-id uid}))
+
 (defmethod in :grube/move-player
   [{:keys [uid]} data out-fn]
   (let [position (select-keys data [:x :y])

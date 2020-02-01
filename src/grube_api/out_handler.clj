@@ -16,6 +16,18 @@
   [{:keys [player-id]} _]
   [:game/player-removed {:player-id player-id}])
 
+(defmethod out :player-paused
+  [{:keys [player-id]}
+   player-id-to-send]
+  (when (not= player-id player-id-to-send)
+    [:game/enemy-paused {:enemy-id player-id}]))
+
+(defmethod out :player-resumed
+  [{:keys [player-id]}
+   player-id-to-send]
+  (when (not= player-id player-id-to-send)
+    [:game/enemy-resumed {:enemy-id player-id}]))
+
 (defmethod out :player-moved
   [{:keys [player]} _]
   [:game/player-moved {:player player}])
