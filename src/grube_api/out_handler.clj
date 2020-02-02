@@ -51,7 +51,6 @@
 (defmethod out :players-scored
   [{:keys [players crowned-player]}
    player-id]
-  (println crowned-player)
   (if-let [player (player/find-by-id players player-id)]
     [:game/player-scored {:score (:score player)
                           :crowned-player (:id crowned-player)}]
